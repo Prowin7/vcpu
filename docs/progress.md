@@ -6,6 +6,8 @@ Last updated: 14 November 2026.
 
 ## Working today
 
+> New to the code? Read [what-the-code-does.md](what-the-code-does.md) first — it walks the register file line by line.
+
 - The project builds and type-checks. Compiling produces a runnable JavaScript file plus type definitions.
 - The **register file** exists: the CPU's working slots that hold one number each, plus the four flags, plus the shortcut that reads two of them as one bigger number.
 - **8 tests pass**, covering the cases most likely to break later.

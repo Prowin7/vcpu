@@ -10,6 +10,7 @@ It works in a browser tab and in a terminal, with no third-party libraries at ru
 
 Early days, on purpose. The register file — the CPU's small set of working slots that hold numbers — is written and tested. Main memory is next.
 
+- [docs/what-the-code-does.md](docs/what-the-code-does.md) — **start here.** Line-by-line tour of the code that exists, in plain words
 - [docs/progress.md](docs/progress.md) — what works today, what's next
 - [docs/how-it-works.md](docs/how-it-works.md) — the parts, the rules, and a glossary
 
