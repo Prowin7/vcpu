@@ -1,32 +1,31 @@
 # vcpu
 
-A Game Boy emulator written in TypeScript, built so the internals are visible
-while it runs.
+A Game Boy emulator written in TypeScript, built to be looked inside.
 
-The idea is straightforward: load a `.gb` game file, run it, and be able to
-pause it to inspect the CPU's registers, memory, graphics memory, tiles and
-sprites. Most emulators show the game. This one is built to show the machine
-behind it.
+You drop a game file (`.gb`) onto a web page, the game starts, and you can
+pause it to see the CPU's registers, walk through memory, and watch the
+graphics memory change. Most emulators show you the game. This one is built to
+show you the machine behind it.
 
-It is designed to run the same way in a browser tab and in a terminal, with no
-third-party libraries at runtime.
+It runs in a browser tab and in a terminal, with no third-party libraries at
+runtime.
 
 ## Status
 
-Early, by design. The register file — the CPU's working storage — is written
-and tested. Main memory is next. Nothing can run a game yet.
+Early, on purpose. The register file — the CPU's small set of working slots —
+is written and tested. Main memory is next. Nothing can run a game yet.
 
-See [docs/status.md](docs/status.md) for an exact, current account.
+See [docs/status.md](docs/status.md) for exactly what works today.
 
 ## Documentation
 
 | I want to… | Read |
 | :--- | :--- |
-| Understand the project and why it is built this way | [docs/explanation/how-it-works.md](docs/explanation/how-it-works.md) |
 | Understand the code that exists, line by line | [docs/explanation/what-the-code-does.md](docs/explanation/what-the-code-does.md) |
-| Know what works today and what is next | [docs/status.md](docs/status.md) |
-| Look up a term like "register" or "V-Blank" | [docs/reference/glossary.md](docs/reference/glossary.md) |
-| Know why a design choice was made | [docs/decisions/](docs/decisions/README.md) |
+| Understand the project and its rules | [docs/explanation/how-it-works.md](docs/explanation/how-it-works.md) |
+| Know what works today and what's next | [docs/status.md](docs/status.md) |
+| Look up a term like "V-Blank" or "register" | [docs/reference/glossary.md](docs/reference/glossary.md) |
+| Know why a choice was made | [docs/decisions/](docs/decisions/README.md) |
 
 The full index is [docs/README.md](docs/README.md).
 
@@ -39,7 +38,7 @@ npm install
 npm test        # run the tests
 npm run build   # compile to JavaScript in dist/
 npm run typecheck
-```text
+```
 
 ## Project layout
 
@@ -51,20 +50,19 @@ src/
 └── sdk/                headless runner and canvas renderer (not yet written)
 tests/                  unit tests
 docs/                   documentation, organised by purpose
-```text
+```
 
-## What is the point
+## What we're aiming at
 
-A project is worth finishing when its correctness is checkable, not when it
-seems to run. The finished emulator should therefore:
+The finished thing should be provably correct, not just "seems to run":
 
-- Run known test programs written by the Game Boy homebrew community, and pass
-  them.
-- Draw a well-known graphics test image exactly right, pixel for pixel.
-- Run real homebrew titles.
+- It runs known test programs written by the Game Boy homebrew community, and
+  passes them.
+- It draws a well-known test image exactly right, pixel for pixel.
+- It runs real homebrew games that people have released for free.
 
-Those test programs already exist and are freely redistributable. That existing
-standard is why the project imitates a real console instead of inventing one.
+Those tests already exist and are free to use. Passing them is the whole point
+of imitating a real console instead of inventing our own.
 
 ## Contributing
 
@@ -74,7 +72,7 @@ Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 MIT. See [LICENSE](LICENSE).
 
-This project contains no game files and no proprietary code. Supply your own
+This project contains no game files and no proprietary code. Bring your own
 `.gb` file.
 
 ## Changelog

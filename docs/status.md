@@ -1,24 +1,28 @@
 # Status
 
-Step 1 of 7 is underway. The register file is written and tested. Memory is
-next.
+**Where we are:** step 1 of 7. The register file is written and tested. Memory is next.
 
 Last updated: 14 November 2026.
 
-This page is narrow on purpose: it states what works, what does not, and what
-comes next. The reasoning behind the project, and the reasoning behind each
-decision, live on the other pages.
+This page is deliberately narrow: it says what works, what doesn't, and what
+comes next. For why the project is shaped this way, read
+[explanation/how-it-works.md](explanation/how-it-works.md). For why a specific
+choice was made, read [decisions/](decisions/README.md).
 
 ## Working today
 
-- The project builds and type-checks. Running the build produces a JavaScript
-  file and type declarations in `dist/`.
-- The register file exists and is tested: seven byte registers, four flag
-  bits, two 16-bit pointers, and the four pairs the console reads as single
-  numbers.
-- Eight tests pass, covering the cases most likely to fail later.
+> New to the code? Read
+> [explanation/what-the-code-does.md](explanation/what-the-code-does.md) first —
+> it walks the register file line by line.
 
-These were verified by running the checks, not by inspection:
+- The project builds and type-checks. Compiling produces a runnable JavaScript
+  file plus type definitions.
+- The **register file** exists: the CPU's working slots that hold one number
+  each, plus the four flags, plus the shortcut that reads two of them as one
+  bigger number.
+- **8 tests pass**, covering the cases most likely to break later.
+
+Checked by running, not assumed:
 
 ```text
 npm run typecheck   → clean
@@ -29,42 +33,43 @@ npm run build       → dist/ written
 ## Not started
 
 - Memory (next)
-- The instruction loop — the part that actually executes a program
+- The instruction loop — the part that actually runs a program
 - Graphics
 - Timer and buttons
-- The public wrapper, save states, and the hardware inspector
-- The small assembler that lets tests be written in text instead of hex bytes
+- The public wrapper, snapshots, and the inspector
+- The small assembler that lets us write test programs in text instead of
+  hand-typed numbers
 
-## Step 1 gate
+## The plan, as a checklist
 
-Step 1 is "scaffolding plus the register file plus memory". It is complete when
-all of the following are true:
+The project is split into 7 steps. Step 1 is "scaffolding plus the register
+file plus memory", and it is done when these are all true.
 
-- [x] Writing a 16-bit value into a pair splits it into the two bytes correctly
-- [x] The flags register keeps its bottom four bits clear
+- [x] Storing a two-part number into one register pair splits it correctly
+- [x] The flags register refuses to hold anything in its unusable bottom four
+      bits
 - [x] The compiler reports no errors
 - [x] The build produces its output files
-- [ ] Writing a 16-bit value stores the low byte first, the way the console does
-- [ ] Writing to the mirrored address region shows up in the original address
+- [ ] Writing two bytes as one larger number stores them small-end-first
+- [ ] A write to the mirrored copy of memory shows up in the original
 
-The last two are the next block of work.
+Those last two are the next block of work.
 
-## Next block: memory
+## Next up: memory
 
-The plan for the memory layer, agreed before it is written:
+The plan for the next block, agreed before writing it:
 
-- A single 64 KB buffer, not a collection of separate objects
-- Byte reads and writes, and 16-bit reads and writes
-- 16-bit values stored with the low byte first, the way the console does
-- The mirrored region: writes to one address show up at a different address,
-  because that region of the console's address space is a copy of another
-- An address watcher, so a later inspector layer can observe changes
-- Tests for each of these, including behaviour at the far end of the address
-  space
+- one flat 64 KB buffer, not a pile of separate objects
+- read and write one byte, and read and write two bytes as one number
+- two-byte numbers stored lowest byte first, the way the console does it
+- the "mirror" region: part of the address space is a copy of another part, so
+  writing to one shows up in the other
+- the ability to watch an address and be told when it changes — this is the
+  hook the inspector is built on
+- tests for each of the above, including what happens at the very top of the
+  address space
 
 ## Decisions
 
-Design decisions are recorded individually in [decisions/](decisions/README.md),
-one file each, with the situation, the choice, and its consequences. The short
-list of reasons behind the register file is on the decision pages, not repeated
-here.
+Design decisions are recorded as ADRs in [decisions/](decisions/README.md), one
+file each, with the situation, the choice, and what it costs.
