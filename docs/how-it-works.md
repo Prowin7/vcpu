@@ -45,22 +45,35 @@ A real Game Boy runs a small hidden program on power-up that leaves the register
 **No game files are committed or published.**
 Tests that need a game file download it into a folder that git ignores.
 
-## Tools, and why
+## Choices we made, and why
 
-| Choice | Reason |
-| :--- | :--- |
-| C++17 | Fast, and integer widths are real types: a register is a `uint8_t`, a program counter is a `uint16_t`. See [decision 0007](../decisions/0007-cpp-not-typescript.md). |
-| Header-only | One `.hpp` per part, no library to link yet. Easy to read top to bottom. |
-| `make` and the system compiler | One short `Makefile`. Nothing to install. |
-| `-Wall -Wextra -Wpedantic -Werror` | Makes the compiler point at the places most likely to be wrong. |
-| A hand-rolled test runner | A few dozen checks do not need a framework. Swap in one when the test count justifies it. |
+- **Real Game Boy hardware, not a made-up CPU.** A made-up CPU has no wrong answers, so nothing to check against. The real one has a public manual and test programs that report their own failures.
+- **C++17.** Fast, and integer sizes are real types: a register is a `uint8_t`, a program counter is a `uint16_t`. The cost: running in a browser would need a WebAssembly build, which is not set up. (The project started in TypeScript and was moved to C++.)
+- **Header-only, no libraries.** One `.hpp` per part, nothing to link or install. `make` and the system compiler are enough.
+- **Strict compiler flags** (`-Wall -Wextra -Wpedantic -Werror`). Any warning stops the build.
+- **A hand-written test runner.** A few dozen checks do not need a framework.
+- **Draw a whole frame at once.** The real console draws pixel by pixel, which takes months to copy. We draw the full 160×144 picture during V-Blank. Games that change the screen mid-frame will look wrong. That is a known, permanent limit.
 
 ## Words you will run into
 
-Every term this project uses, in plain words, is in the glossary: [../reference/glossary.md](../reference/glossary.md).
+| Term | Meaning |
+| :--- | :--- |
+| **Address** | A number that names one byte of memory, like a house number. |
+| **Byte** | One number, 0–255. |
+| **Flag** | A single bit recording what the last calculation did. |
+| **Frame** | One complete picture. The screen redraws about 60 times a second. |
+| **Half-carry** | A carry out of the 4th bit. Exists only so decimal arithmetic works. |
+| **Hex (`0xFF00`)** | How addresses are written. `0xFF00` is 65280. |
+| **Instruction** | One thing the CPU can do, like "add these two numbers". |
+| **Interrupt** | The hardware tapping the CPU on the shoulder: "deal with me now". |
+| **Mask** | A number used to keep or clear specific bits, e.g. `0xff` keeps the bottom 8 bits. |
+| **Register** | A tiny slot inside the CPU holding one number, 0–255. |
+| **ROM / game file** | The game itself, a single `.gb` file. |
+| **Snapshot** | A copy of the whole machine at one instant, so you can return to it. |
+| **Sprite / tile** | A sprite is a small picture that moves (a character). A tile is an 8×8 picture the screen is built from. |
+| **V-Blank** | The short gap after each frame, when the screen is idle and safe to redraw. |
+| **Word (16-bit)** | Two bytes read as one number, 0–65535. |
 
 ## Where the deeper notes are
 
-[what-is-possible.md](../../what-is-possible.md) covers what the surrounding landscape looks like and why the scope was cut where it was. The milestone plan is in [virtual_8_bit_cpu_browser_hardware_architecture_plan.md](../../virtual_8_bit_cpu_browser_hardware_architecture_plan.md).
-
-Those two are research notes, written before any code existed, so they use the jargon freely. This page is the plain-language version.
+[what-is-possible.md](../what-is-possible.md) covers the surrounding landscape and why the scope was cut where it was. The milestone plan is in [virtual_8_bit_cpu_browser_hardware_architecture_plan.md](../virtual_8_bit_cpu_browser_hardware_architecture_plan.md). Those two are research notes written before any code existed, so they use jargon freely.

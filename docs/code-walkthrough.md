@@ -1,8 +1,8 @@
-# What the code does
+# Code walkthrough
 
-Read this if `value & BYTE_MASK` looks like soup. It walks through the only real file we have written, in order, and explains what each part is *for*.
+Read this if `value & 0xff` looks like soup. It walks through the only real file we have written, `src/cpu/Registers.hpp`, in order, and explains what each part is *for*.
 
-**Short version:** we have written the CPU's scratchpad. about 130 lines. It cannot run a game yet, and it isn't supposed to.
+**Short version:** we have written the CPU's scratchpad. About 150 lines, mostly comments. It cannot run a game yet, and it isn't supposed to.
 
 ---
 
