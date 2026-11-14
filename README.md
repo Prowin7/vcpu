@@ -1,18 +1,39 @@
 # vcpu
 
-A Game Boy (DMG) virtual machine in TypeScript: zero runtime dependencies, ESM only, runs the same in the browser and in Node, and can be inspected while it runs.
+A Game Boy emulator written in TypeScript.
 
-**Status: M0 in progress.** Registers are done and tested. Memory bus is next. See [docs/progress.md](./docs/progress.md) for the exact state and [docs/architecture.md](./docs/architecture.md) for how the pieces fit.
+The idea is simple: you drop a game file (`.gb`) onto a web page, the game starts, and you can pause it and look inside — see the CPU's registers, walk through memory, watch the graphics memory change. Most emulators show you the game. This one is built to show you the machine behind it.
 
-Target: passes blargg `cpu_instrs`, `instr_timing`, `mem_timing`, and renders `dmg-acid2` pixel-perfect.
+It works in a browser tab and in a terminal, with no third-party libraries at runtime.
+
+## Where it is right now
+
+Early days, on purpose. The register file — the CPU's small set of working slots that hold numbers — is written and tested. Main memory is next.
+
+- [docs/progress.md](docs/progress.md) — what works today, what's next
+- [docs/how-it-works.md](docs/how-it-works.md) — the parts, the rules, and a glossary
+
+## Running it
 
 ```bash
 npm install
-npm test        # unit tests
-npm run build   # ESM + .d.ts into dist/
+npm test        # run the tests
+npm run build   # compile to JavaScript in dist/
 npm run typecheck
 ```
 
-This project contains no ROMs and no proprietary code. Supply your own.
+## What we're aiming at
+
+The finished thing should be provably correct, not just "seems to run":
+
+- It runs known test programs written by the Game Boy homebrew community, and passes them.
+- It draws a well-known test image exactly right, pixel for pixel.
+- It runs real homebrew games that people have released for free.
+
+Those tests exist already and are free to use. Passing them is the whole point of choosing a real console to imitate instead of inventing our own.
+
+## Licence
+
+This project contains no game files and no proprietary code. Bring your own `.gb` file.
 
 MIT.

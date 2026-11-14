@@ -1,60 +1,62 @@
 # Progress
 
-Last updated: 2026-11-14 · Milestone **M0 (scaffold + headless harness)** — in progress
+**Where we are:** step 1 of 7. The register file is written and tested. Memory is next.
 
-## Done and verified
+Last updated: 14 November 2026.
 
-| Thing | State | Evidence |
-| :--- | :--- | :--- |
-| Package scaffold | ✅ | ESM, `type: module`, `engines: node >=20`, scripts `test` / `build` / `typecheck` |
-| Strict TypeScript | ✅ | `strict` + `noUncheckedIndexedAccess`, `tsc --noEmit` exits 0 |
-| Build pipeline | ✅ | `dist/index.js` (3.04 KB) + `dist/index.d.ts` (2.42 KB) |
-| `src/cpu/Registers.ts` | ✅ | 10-byte register file, masked accessors, computed AF/BC/DE/HL, four flag accessors, `postBoot()` |
-| `tests/registers.test.ts` | ✅ | 8/8 passing |
-| Docs | ✅ | `docs/architecture.md`, this file |
+## Working today
 
-Commands run to confirm, last at 2026-11-14:
+- The project builds and type-checks. Compiling produces a runnable JavaScript file plus type definitions.
+- The **register file** exists: the CPU's working slots that hold one number each, plus the four flags, plus the shortcut that reads two of them as one bigger number.
+- **8 tests pass**, covering the cases most likely to break later.
+
+Checked by running, not assumed:
 
 ```
-npm run typecheck   → exit 0
-npm test            → 1 file, 8 tests passed
-npm run build       → ESM + DTS success, dist/index.js + dist/index.d.ts
+npm run typecheck   → clean
+npm test            → 8 passed
+npm run build       → dist/ written
 ```
 
 ## Not started
 
-- `src/mmu/MemoryBus.ts` — next up
-- `src/sdk/Headless.ts` — stub until the CPU exists
-- everything below M0 (CPU, PPU, peripherals, SDK, assembler)
+- Memory (next)
+- The instruction loop — the part that actually runs a program
+- Graphics
+- Timer and buttons
+- The public wrapper, snapshots, and the inspector
+- The small assembler that lets us write test programs in text instead of hand-typed numbers
 
-## M0 gate checklist
+## The plan, as a checklist
 
-From the plan: green tests on a register file and a byte-addressed bus is the whole of M0.
+The project is split into 7 steps. Step 1 is "scaffolding plus the register file plus memory", and it is done when these are all true.
 
-- [x] writing `0x1234` to `BC` yields `B=0x12, C=0x34`
-- [x] setting `AF` masks `F` to `0xF0`
-- [ ] `write16(0xC000, 0xABCD)` writes `0xCD` at `0xC000` then `0xAB` at `0xC001` (little-endian)
-- [ ] echo-RAM write to `0xE000` visible at `0xC000`
-- [x] `tsc --noEmit` clean
-- [x] `npm run build` emits `dist/index.js` + `dist/index.d.ts`
+- [x] Storing a two-part number into one register pair splits it correctly
+- [x] The flags register refuses to hold anything in its unusable bottom four bits
+- [x] The compiler reports no errors
+- [x] The build produces its output files
+- [ ] Writing two bytes as one larger number stores them small-end-first
+- [ ] A write to the mirrored copy of memory shows up in the original
 
-## Next block: `src/mmu/MemoryBus.ts`
+Those last two are the next block of work.
 
-Intended shape, to be argued line by line before it is written:
+## Next up: memory
 
-- one 64 KB `ArrayBuffer` + a `DataView`; no per-region objects
-- `read8`/`write8`, `read16`/`write16` as little-endian pairs (low byte first)
-- address masking (`& 0xFFFF`) so a runaway `PC` reads rather than throws
-- echo RAM `0xE000–0xFDFF` mirrored onto `0xC000–0xDDFF`
-- a watcher registry (`watch(addr, cb)`) — the hook the inspector is built on
-- tests: little-endian order, echo mirroring both directions, wrap-around, watcher fires on write only
+The plan for the next block, agreed before writing it:
 
-## Decisions log
+- one flat 64 KB buffer, not a pile of separate objects
+- read and write one byte, and read and write two bytes as one number
+- two-byte numbers stored lowest byte first, the way the console does it
+- the "mirror" region: part of the address space is a copy of another part, so writing to one shows up in the other
+- the ability to watch an address and be told when it changes — this is the hook the inspector is built on
+- tests for each of the above, including what happens at the very top of the address space
+
+## Decisions so far
 
 | Date | Decision | Why |
 | :--- | :--- | :--- |
-| 2026-11-14 | Flag accessors are `zeroFlag` / `subtractFlag` / `halfCarryFlag` / `carryFlag` | `h` and `c` are already the H and C registers; the short names are a duplicate class member |
-| 2026-11-14 | Pair accessors write through the byte setters, not the private fields | Keeps masking enforced in one place only |
-| 2026-11-14 | TypeScript pinned to `^5` | `rollup-plugin-dts` fails to load TS 6.0.3; tsup DTS build errors out |
-| 2026-11-14 | `postBoot()` is a static factory, not constructor defaults | `new Registers()` must stay all-zero for tests and for pre-boot semantics |
-| 2026-11-14 | `"private": true` in package.json | Blocks an accidental publish before the M6 gate |
+| 14 Nov | Flag names spelled out in full | The single letters are already taken by two registers |
+| 14 Nov | Register pairs are calculated on demand, never stored twice | Two copies of the same number eventually disagree |
+| 14 Nov | TypeScript pinned to version 5 | The type-bundling tool cannot read version 6 yet |
+| 14 Nov | Startup state is a separate function, not the default | A fresh register file should stay empty for tests |
+| 14 Nov | Package marked private | Blocks an accidental publish before the project is ready |
