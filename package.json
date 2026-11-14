@@ -1,0 +1,21 @@
+{
+  "name": "vcpu",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A Game Boy (DMG) virtual machine in TypeScript with live hardware inspection.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "tsup": "^9.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^5.1.0"
+  }
+}

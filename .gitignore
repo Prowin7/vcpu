@@ -1,0 +1,10 @@
+node_modules/
+dist/
+
+# Test ROMs are fetched, never committed or published.
+tests/roms/
+*.gb
+*.gbc
+
+*.log
+.DS_Store
