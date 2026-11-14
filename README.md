@@ -8,26 +8,33 @@ Plain C++17, no libraries.
 
 ## Status
 
-Early, on purpose. Only the **register file** (the CPU's small set of working slots) is written and tested. Nothing can run a game yet.
+Early, on purpose. Written and tested: the **registers**, the 64 KB **memory**, and the **CPU** (every instruction). `vcpu` can run a simple ROM headless and print its serial output and final registers.
 
-Next: main memory (64 KB, reads and writes, the mirrored region, an address watcher).
-After that: the instruction loop, graphics, timer and buttons, and the inspector.
+Not done yet: interrupts, the timer, HALT waiting, cycle counts, graphics, buttons, cartridges over 32 KB, and the inspector. Nothing can show a game yet.
+
+Next: run a community CPU test ROM (downloaded into `tests/roms/`) and fix what it reports. After that: timer and interrupts, graphics, buttons, and the inspector.
 
 ## Run it
 
 Needs a C++17 compiler (`c++`, `g++` or `clang++`) and `make`. Nothing else to install.
 
 ```bash
-make test    # build and run the tests
-make clean   # delete build/
+make test                          # build and run the tests
+make build                         # build build/vcpu
+./build/vcpu game.gb [max_steps]   # run a ROM, print serial text and registers
+make clean                         # delete build/
 ```
 
 ## Layout
 
 ```text
-src/cpu/Registers.hpp      the CPU's registers and flags (the only code so far)
-tests/registers_test.cpp   checks that prove it works
-Makefile                   builds and runs the tests
+src/cpu/Registers.hpp      the CPU's registers and flags
+src/cpu/Memory.hpp         the 64 KB of memory, ROM loading, serial output
+src/cpu/Cpu.hpp            runs one instruction at a time
+src/main.cpp               the `vcpu` command: load a ROM and run it
+tests/registers_test.cpp   checks for the registers
+tests/cpu_test.cpp         checks for memory and the CPU
+Makefile                   builds, runs the tests, builds `vcpu`
 docs/                      the two docs below
 ```
 

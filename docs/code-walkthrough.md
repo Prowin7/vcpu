@@ -1,8 +1,8 @@
 # Code walkthrough
 
-Read this if `value & 0xff` looks like soup. It walks through the only real file we have written, `src/cpu/Registers.hpp`, in order, and explains what each part is *for*.
+Read this if `value & 0xff` looks like soup. Parts 1-7 walk through `src/cpu/Registers.hpp` in order and explain what each part is *for*. Part 8 covers the memory, the CPU and the `vcpu` command.
 
-**Short version:** we have written the CPU's scratchpad. About 150 lines, mostly comments. It cannot run a game yet, and it isn't supposed to.
+**Short version:** the registers, memory and CPU are written. A simple ROM runs headless; nothing is drawn yet.
 
 ---
 
@@ -69,11 +69,15 @@ Used to glue two halves back into one number.
 ## Part 3 — Every file we have, and why it exists
 
 ```text
-Makefile                 Builds the test with the C++ compiler and runs it.
+Makefile                 Builds the tests and `vcpu` with the C++ compiler.
 .gitignore               Files that must never be committed: build output and
                          game files.
-src/cpu/Registers.hpp    THE CODE. Everything below is about this file.
-tests/registers_test.cpp The checks that prove the above works.
+src/cpu/Registers.hpp    The registers. Parts 4-7 are about this file.
+src/cpu/Memory.hpp       The 64 KB of memory. Part 8.
+src/cpu/Cpu.hpp          The instructions. Part 8.
+src/main.cpp             The `vcpu` command. Part 8.
+tests/registers_test.cpp Checks for the registers.
+tests/cpu_test.cpp       Checks for memory and the CPU.
 docs/                    These explanations.
 ```
 
@@ -249,13 +253,20 @@ The flag check is the important one for what comes next. Once there are 500 inst
 
 ---
 
-## Part 6 — What the command does
+## Part 6 — What the commands do
 
 ```bash
 make test
 ```
 
-Compiles the test, then runs it. The compiler runs with `-Wall -Wextra -Wpedantic -Werror`: every warning is turned on, and any warning stops the build. No game runs, no browser. Just: does the register file still behave?
+Compiles both test programs, then runs them. The compiler runs with `-Wall -Wextra -Wpedantic -Werror`: every warning is turned on, and any warning stops the build.
+
+```bash
+make build
+./build/vcpu game.gb [max_steps]
+```
+
+Builds the `vcpu` command, then runs a ROM for `max_steps` instructions (default 10,000,000). It prints any text the ROM sent over the serial port, then the final registers.
 
 ```bash
 make clean
@@ -267,12 +278,50 @@ Deletes the `build/` folder.
 
 ## Part 7 — What does *not* exist yet
 
-Worth being blunt, so nothing here feels mysterious:
+- **Nothing is drawn.** No graphics, no buttons, no sound.
+- **No interrupts or timer.** `EI` and `DI` only flip a flag. HALT does nothing.
+- **No cycle counts.** The CPU does not know how long an instruction takes.
+- **Cartridges over 32 KB do not work.** There is no bank switching.
+- **The CPU has not been checked against a real test ROM yet.** Our own tests cover a handful of instructions, not all of them.
 
-- **Nothing runs a game.** There is no instruction loop, no graphics, no sound, no file loading.
-- **The 64 KB of memory doesn't exist.** The CPU has its scratchpad and nothing to scratch at.
-- **Only the scratchpad is tested.** Everything else is a plan.
+---
 
-The order is deliberate: the scratchpad is where every other bug would eventually show up, so it gets built and frozen first. When the instruction loop lands next, "is this new bug in the registers or in the new code?" already has half its answer.
+## Part 8 — Memory, CPU and `vcpu`
 
-Next block: memory — the 64 KB, the reads and writes, the mirrored region, and the address watcher the inspector will use.
+### `Memory.hpp`
+
+One array of 65536 bytes. `read(address)` and `write(address, value)` are the only way in, and both cut the address to 16 bits.
+
+- **The mirror.** `0xE000`-`0xFDFF` is the same memory as `0xC000`-`0xDDFF`. `real_address` subtracts `0x2000` so both addresses reach the same byte.
+- **Serial output.** Test ROMs print text one byte at a time: put the byte in `0xFF01`, write `0x81` to `0xFF02`. `write` spots that and appends the character to `serial_output`.
+- **`load_rom`** copies the game into the first 32 KB.
+
+### `Cpu.hpp`
+
+`Cpu` owns a `Registers` and borrows a `Memory`. Each `step()`:
+
+1. `fetch_byte()` reads the byte at PC and moves PC forward. That byte is the opcode.
+2. The opcode picks a branch: `0xCB` goes to the prefix handler, `0x40`-`0x7F` is a register copy, `0x80`-`0xBF` is math on A, and the rest go to `run_block_0` or `run_block_3`.
+3. The branch does its work and returns.
+
+Things to know when reading it:
+
+- **Register numbers.** `0=B 1=C 2=D 3=E 4=H 5=L 6=(HL) 7=A`. `(HL)` means the memory byte at the address in HL. `get_register` and `set_register` hide that difference.
+- **Pair and condition numbers.** Pairs are `0=BC 1=DE 2=HL 3=SP` (3 is AF for push and pop). Conditions are `0=NZ 1=Z 2=NC 3=C`.
+- **`alu(kind, value)`** is one function for ADD, ADC, SUB, SBC, AND, XOR, OR and CP. It works out the result and the flags, and CP skips storing the result.
+- **Flags.** INC and DEC leave carry alone. 16-bit ADD leaves zero alone. Each rule is in the code next to the instruction.
+- **Unknown opcodes** throw an error, which `main` catches and reports with the PC.
+
+### `main.cpp`
+
+Reads the file into bytes, loads it into memory, creates the CPU, and calls `step()` in a loop. Then it prints the serial text and registers.
+
+### `tests/cpu_test.cpp`
+
+Same `check` style as the register tests. A small helper writes a few bytes at `0x0100` and runs some steps. Covered: memory mirror and serial capture, loads, ADD and CP flags, DAA, CALL and RET, a not-taken jump, and SWAP and BIT.
+
+---
+
+## Next
+
+Run a community CPU test ROM through `vcpu` and fix the instructions it flags. After that: the timer and interrupts, then graphics.
