@@ -1,37 +1,29 @@
-#include <cstdlib>
 #include <fstream>
 #include <iostream>
 
 #include "cpu/Cpu.hpp"
 
-// Usage: vcpu game.gb [max_instructions]
-int main(int argc, char** argv) {
-  if (argc < 2) {
-    cout << "usage: vcpu game.gb [max_instructions]" << endl;
-    return 1;
-  }
+// Change these two lines to run a different game or run for longer.
+const char* ROM_PATH = "game.gb";
+const int MAX_INSTRUCTIONS = 10000000;
 
-  // Read the whole game file into one array (32 KB is the most we use).
+int main() {
+  // Read the game file into one array (32 KB is the most we use).
   static uint8_t rom[0x8000];
-  ifstream file(argv[1], ios::binary);
+  ifstream file(ROM_PATH, ios::binary);
   if (!file) {
-    cout << "cannot open " << argv[1] << endl;
+    cout << "cannot open " << ROM_PATH << endl;
     return 1;
   }
   file.read(reinterpret_cast<char*>(rom), sizeof(rom));
   int rom_size = file.gcount();
-
-  int max_instructions = 10000000;
-  if (argc >= 3) {
-    max_instructions = atoi(argv[2]);
-  }
 
   Memory memory;
   memory.load_rom(rom, rom_size);
   Cpu cpu(memory);
 
   try {
-    for (int i = 0; i < max_instructions; i++) {
+    for (int i = 0; i < MAX_INSTRUCTIONS; i++) {
       cpu.step();
     }
   } catch (const exception& error) {

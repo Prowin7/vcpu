@@ -21,7 +21,7 @@ Needs a C++17 compiler (`c++`, `g++` or `clang++`) and `make`. Nothing else to i
 ```bash
 make test                          # build and run the tests
 make build                         # build build/vcpu
-./build/vcpu game.gb [max_steps]   # run a ROM, print serial text and registers
+./build/vcpu                       # run game.gb from the current folder
 make clean                         # delete build/
 ```
 

@@ -263,10 +263,10 @@ Compiles both test programs, then runs them. The compiler runs with `-Wall -Wext
 
 ```bash
 make build
-./build/vcpu game.gb [max_steps]
+./build/vcpu
 ```
 
-Builds the `vcpu` command, then runs a ROM for `max_steps` instructions (default 10,000,000). It prints any text the ROM sent over the serial port, then the final registers.
+Builds the `vcpu` command, then runs `game.gb` from the current folder for 10,000,000 instructions. Both are constants at the top of `src/main.cpp`. It prints any text the ROM sent over the serial port, then the final registers.
 
 ```bash
 make clean
