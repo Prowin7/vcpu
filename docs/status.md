@@ -15,19 +15,16 @@ choice was made, read [decisions/](decisions/README.md).
 > [explanation/what-the-code-does.md](explanation/what-the-code-does.md) first —
 > it walks the register file line by line.
 
-- The project builds and type-checks. Compiling produces a runnable JavaScript
-  file plus type definitions.
+- The project builds as C++17 with warnings treated as errors.
 - The **register file** exists: the CPU's working slots that hold one number
   each, plus the four flags, plus the shortcut that reads two of them as one
   bigger number.
-- **8 tests pass**, covering the cases most likely to break later.
+- **20 checks pass**, covering the cases most likely to break later.
 
 Checked by running, not assumed:
 
 ```text
-npm run typecheck   → clean
-npm test            → 8 passed
-npm run build       → dist/ written
+make test   → all passed
 ```
 
 ## Not started
@@ -48,8 +45,7 @@ file plus memory", and it is done when these are all true.
 - [x] Storing a two-part number into one register pair splits it correctly
 - [x] The flags register refuses to hold anything in its unusable bottom four
       bits
-- [x] The compiler reports no errors
-- [x] The build produces its output files
+- [x] The compiler reports no errors or warnings
 - [ ] Writing two bytes as one larger number stores them small-end-first
 - [ ] A write to the mirrored copy of memory shows up in the original
 

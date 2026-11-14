@@ -14,7 +14,7 @@ That program is Nintendo's copyrighted code. It cannot be shipped.
 
 Do not emulate it. Set the registers directly to the values the program would
 have left behind (`AF=0x01B0`, `BC=0x0013`, `DE=0x00D8`, `HL=0x014D`,
-`SP=0xFFFE`, `PC=0x0100`), in `Registers.postBoot()`.
+`SP=0xFFFE`, `PC=0x0100`), in `Registers::set_post_boot_values()`.
 
 ## Consequences
 

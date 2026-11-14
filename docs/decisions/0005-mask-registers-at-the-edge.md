@@ -14,7 +14,7 @@ addresses, and the emulator wanders off into unallocated memory with no error.
 ## Decision
 
 Store registers as private fields and expose them only through accessors that
-mask: the `a` setter applies `& 0xff`, the `pc` setter applies `& 0xffff`.
+mask: the `set_a` setter applies `& 0xff`, the `set_pc` setter applies `& 0xffff`.
 Nothing outside the class can reach the raw field.
 
 ## Consequences

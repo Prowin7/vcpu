@@ -5,19 +5,18 @@ are welcome.
 
 ## Getting set up
 
-Requires Node.js 20 or newer.
+Requires a C++17 compiler and `make`.
 
 ```bash
-npm install
-npm test
-npm run typecheck
+make test
 ```
+
+To lint the docs: `npx markdownlint-cli2 "**/*.md"`.
 
 ## Before opening a pull request
 
-- `npm test` passes.
-- `npm run typecheck` reports nothing.
-- `npm run build` succeeds.
+- `make test` passes. It compiles with `-Wall -Wextra -Wpedantic -Werror`, so
+  warnings count as failures.
 
 ## House rules
 

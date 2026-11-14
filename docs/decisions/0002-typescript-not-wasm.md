@@ -1,6 +1,6 @@
 # 0002 — Write it in TypeScript, not Rust/C++ compiled to WebAssembly
 
-**Status:** Accepted (14 November 2026)
+**Status:** Superseded by [0007](0007-cpp-not-typescript.md)
 
 ## Context
 

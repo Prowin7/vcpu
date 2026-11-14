@@ -2,7 +2,7 @@
 
 Read this if `value & BYTE_MASK` looks like soup. It walks through the only real file we have written, in order, and explains what each part is *for*.
 
-**Short version:** we have written the CPU's scratchpad. 189 lines. It cannot run a game yet, and it isn't supposed to.
+**Short version:** we have written the CPU's scratchpad. about 130 lines. It cannot run a game yet, and it isn't supposed to.
 
 ---
 
@@ -69,37 +69,40 @@ Used to glue two halves back into one number.
 ## Part 3 — Every file we have, and why it exists
 
 ```text
-package.json        Tells npm the project's name, that it uses modern modules,
-                    and what `npm test` / `npm run build` should run.
-tsconfig.json       Rules for the compiler. Mostly: be strict, and yell at me
-                    when something might be undefined.
-.gitignore          Files that must never be committed: installed packages,
-                    build output, and game files.
-src/index.ts        The front door. 7 lines. Re-exports what the package offers.
-src/cpu/Registers.ts  THE CODE. Everything below is about this file.
-tests/registers.test.ts  8 tests that prove the above works.
-docs/               These explanations.
+Makefile                 Builds the test with the C++ compiler and runs it.
+.gitignore               Files that must never be committed: build output and
+                         game files.
+src/cpu/Registers.hpp    THE CODE. Everything below is about this file.
+tests/registers_test.cpp The checks that prove the above works.
+docs/                    These explanations.
 ```
 
-`src/index.ts` is 7 lines and looks pointless. It isn't: it decides what the outside world is allowed to touch. Everything in `src/` is private unless it's re-exported here.
+`Registers.hpp` is a header file. Any file that writes `#include "Registers.hpp"` gets the whole class, because the code lives in the header itself.
 
 ---
 
-## Part 4 — Walking `src/cpu/Registers.ts` line by line
+## Part 4 — Walking `src/cpu/Registers.hpp`
 
-### Lines 1–11: the header comment
+### The top
 
-Says what the file is and states the one rule it enforces: **a register holds 0–255, and that is checked here, in this file, in one place.**
+```cpp
+#pragma once
 
-Keep that sentence in mind. Every design choice below follows from it.
+#include <cstdint>
+using namespace std;
+```
 
-### Lines 13–20: the four flags
+- `#pragma once` — read this file only once, even if several files include it.
+- `#include <cstdint>` — gives us `uint8_t` (a number that is exactly 8 bits, so 0–255) and `uint16_t` (exactly 16 bits, 0–65535).
+- `using namespace std;` — lets us write `uint8_t` instead of `std::uint8_t`. Because it is in a header, every file that includes this one gets it too. That is fine for a small project like this one.
 
-```ts
-export const FLAG_Z = 0x80;
-export const FLAG_N = 0x40;
-export const FLAG_H = 0x20;
-export const FLAG_C = 0x10;
+### The four flags
+
+```cpp
+const int FLAG_Z = 0x80;
+const int FLAG_N = 0x40;
+const int FLAG_H = 0x20;
+const int FLAG_C = 0x10;
 ```
 
 The F register doesn't store a number. It stores four on/off switches, one per bit, in the *top* four bits of a byte:
@@ -113,101 +116,70 @@ The F register doesn't store a number. It stores four on/off switches, one per b
 
 `0x80` is just the number whose 7th bit is on. So these constants aren't flag *values*, they're **masks**: a tool for picking out one switch.
 
-Here's what each means, in game terms:
-
 - **Z (zero)** — "the answer was 0". Games check this constantly: *did the counter reach zero?*
 - **N (subtract)** — "the last calculation was a subtraction". Only used to make decimal arithmetic work.
 - **H (half-carry)** — "carrying out of the 4th bit". Exists purely for decimal arithmetic.
 - **C (carry)** — "it overflowed past 255, or borrowed below 0".
 
-### Lines 22–24: three masks with names
+### The storage (bottom of the file)
 
-```ts
-const BYTE_MASK = 0xff;   // 0000 0000 1111 1111
-const WORD_MASK = 0xffff; // 1111 1111 1111 1111
-const FLAG_MASK = 0xf0;   // 1111 0000
-```
-
-`BYTE_MASK` keeps 8 bits. `WORD_MASK` keeps 16. `FLAG_MASK` keeps the top 4 and wipes the bottom 4.
-
-They're named because the alternative is `& 0xff` scattered through 500 future instructions, where a single typo of `& 0xfff` creates a bug you'd hunt for a week. A name can be searched; a magic number can't.
-
-### Lines 27–36: the actual storage
-
-```ts
-private _a = 0;
-private _b = 0;
-...
-private _pc = 0;
-private _sp = 0;
+```cpp
+ private:
+  uint8_t a_ = 0;
+  uint8_t b_ = 0;
+  ...
+  uint16_t pc_ = 0;
+  uint16_t sp_ = 0;
 ```
 
 Ten private numbers, all starting at 0. **This is the entire state of the CPU.** Everything the game knows lives here, or in the 64 KB of memory outside.
 
-`private` matters: no other file can reach `_a` directly. The only way in is the setter below.
+`private` means no other file can touch `a_` directly. The only way in is the setter. The underscore at the end is just a habit that says "this is private data".
 
-### Lines 38–43: one register, fully, as the pattern for all ten
+### One register, as the pattern for all ten
 
-```ts
-get a(): number {
-  return this._a;
-}
-set a(value: number) {
-  this._a = value & BYTE_MASK;
+```cpp
+uint8_t a() { return a_; }
+void set_a(int value) { a_ = value & 0xff; }
+```
+
+`a()` returns the stored number. `set_a(300)` stores `44`, because `300 & 0xff = 44`.
+
+The setter takes an `int` so that instructions can hand it any result — too big, or even negative — and the setter cuts it down to 8 bits. `set_a(-1)` stores `255`.
+
+**Why bother?** Otherwise ~500 instructions each have to remember to trim their own numbers, and one that forgets silently corrupts everything downstream. Here the trimming happens once, in the setter, so no code can put an invalid number into A.
+
+The other six registers (B, C, D, E, H, L) are identical. Skim them.
+
+### F, which is special
+
+```cpp
+void set_f(int value) { f_ = value & 0xf0; }
+```
+
+The bottom four bits of F **do not exist** on real hardware, so they are forced to zero. `0xf0` keeps the top 4 bits and wipes the bottom 4.
+
+### PC and SP
+
+Same pattern, but `& 0xffff` because they hold addresses, which are 0–65535. Write `70000` into PC and you get `4464`, so PC can never run off the end of memory.
+
+### The pairs
+
+```cpp
+uint16_t bc() { return (b_ << 8) | c_; }
+void set_bc(int value) {
+  set_b(value >> 8);
+  set_c(value);
 }
 ```
 
-Reading `reg.a` returns the stored number. Writing `reg.a = 300` stores `44`, because `300 & 0xff = 44`.
+To get BC, push B up 8 places and put C underneath. To set BC, split the number.
 
-**Why bother?** Because otherwise ~500 instructions each have to remember to trim their own numbers, and one that forgets silently corrupts everything downstream. Here, the trimming happens once, and no code anywhere can put an invalid number into A. The bug becomes impossible rather than unlikely.
-
-This is the trade in one line: **10 extra lines of code, in exchange for an entire category of bug that can never be written.**
-
-### Lines 45–85: the other six registers
-
-Identical pattern. Nothing new. Skim them.
-
-### Lines 87–96: F, which is special
-
-```ts
-get f(): number {
-  return this._f;
-}
-set f(value: number) {
-  this._f = value & FLAG_MASK;
-}
-```
-
-The bottom four bits of F **do not exist** on real hardware — there's nothing behind them. So they're forced to zero on write.
-
-Note the asymmetry: the setter masks, the getter doesn't. That's deliberate. Because the setter is the only door in, `_f` can never hold rubbish, so the getter has nothing to clean up. One mask, at the door, is enough.
-
-### Lines 98–110: PC and SP
-
-Same pattern, but masked to 16 bits (`0xffff`) because they hold addresses, which are 0–65535.
-
-The payoff: `pc` can't go negative or past the end of memory. Write `70000` into it and you get `4464`. That single line prevents the classic emulator disaster where the program counter runs off into nowhere and the emulator hangs with no explanation.
-
-### Lines 112–143: the pairs
-
-```ts
-get bc(): number {
-  return (this._b << 8) | this._c;
-}
-set bc(value: number) {
-  this.b = value >> 8;
-  this.c = value;
-}
-```
-
-Read it as: **to get BC, push B up 8 places and drop C underneath.** To set BC, split it.
-
-Worked example — `reg.bc = 0x1234`:
+Worked example — `set_bc(0x1234)`:
 
 ```text
-  value = 0x1234
   value >> 8  = 0x12  →  stored in B
-  value       = 0x34  →  stored in C  (truncated to 8 bits by the setter)
+  value       = 0x34  →  stored in C  (the setter keeps only the low 8 bits)
 ```
 
 and reading it back:
@@ -216,84 +188,80 @@ and reading it back:
   (0x12 << 8) | 0x34  =  0x1200 | 0x34  =  0x1234
 ```
 
-**Why not just store BC as its own number?** Because then B, C and BC would all be holding the same information, and any code that updates one pair of them and forgets the third leaves the register disagreeing with itself. That bug is invisible: every individual instruction looks right, and only a specific combination betrays it.
+**Why not store BC as its own number?** Then B, C and BC would all hold the same information, and code that updates one and forgets the others leaves the register disagreeing with itself.
 
-Notice line 125 writes `this.b`, **not** `this._b`. It goes through the setter, so the trimming rule still applies. Same reason as before: one place, one rule.
+The setter calls `set_b` and `set_c`, not `b_ = ...`, so the trimming rule still applies.
 
-### Lines 145–173: the four flag switches
+### The four flag switches
 
-```ts
-get zeroFlag(): boolean {
-  return (this._f & FLAG_Z) !== 0;
-}
-set zeroFlag(on: boolean) {
-  this.f = on ? this._f | FLAG_Z : this._f & ~FLAG_Z;
+```cpp
+bool zero_flag() { return (f_ & FLAG_Z) != 0; }
+void set_zero_flag(bool on) {
+  if (on) {
+    set_f(f_ | FLAG_Z);
+  } else {
+    set_f(f_ & ~FLAG_Z);
+  }
 }
 ```
 
-Reading: `f & 0x80` leaves only the Z bit. If it's non-zero, the switch is on.
+Reading: `f_ & 0x80` leaves only the Z bit. If that is not zero, the switch is on.
 
-Writing: if turning it on, OR the bit in. If turning it off, AND with the inverse (clearing just that bit, leaving the other three alone).
+Writing: to turn it on, OR the bit in. To turn it off, AND with the opposite (`~`), which clears that one bit and leaves the other three alone.
 
-The comment on line 145 explains the naming. The console calls these `Z N H C`, but **`H` and `C` are also the names of two registers**. Using the short names would collide — TypeScript would refuse to compile, and more importantly, a human reading `reg.c` couldn't tell which one was meant. So the flags are `zeroFlag`, `subtractFlag`, `halfCarryFlag`, `carryFlag`. The single letters stay reserved for registers.
+The other three flags repeat this exactly, with their own mask.
 
-### Lines 175–188: `postBoot()`
+The flags are named in full (`zero_flag`, `carry_flag`, ...) because the console calls them `Z N H C`, and **`H` and `C` are also the names of two registers**. A reader seeing `c()` couldn't tell which one was meant.
 
-```ts
-static postBoot(): Registers {
-  const r = new Registers();
-  r.af = 0x01b0;
+### `set_post_boot_values()`
+
+```cpp
+void set_post_boot_values() {
+  set_af(0x01b0);
+  set_bc(0x0013);
   ...
-  return r;
+  set_pc(0x0100);
 }
 ```
 
-A real Game Boy runs a small hidden program when you switch it on. That program does some checks and leaves the registers at specific known values. Everyone emulating a Game Boy skips it and jumps straight to those values — because that startup program is Nintendo's code, and shipping it isn't legal.
+A real Game Boy runs a small hidden program when you switch it on. It leaves the registers at known values. Everyone emulating a Game Boy skips it and sets those values directly — the startup program is Nintendo's code, and shipping it isn't legal.
 
-This function is those values. `pc = 0x0100` is the entry point of the game.
-
-It's a **static** function (called as `Registers.postBoot()`) rather than the default state, so that a plain `new Registers()` stays all-zero — which is what hardware actually looks like before that program runs, and what the tests want.
+`pc = 0x0100` is where games begin. A plain `Registers r;` stays all-zero, which is what the hardware looks like before the startup program runs.
 
 ---
 
 ## Part 5 — The tests, and what they're actually for
 
-`tests/registers.test.ts`, 8 tests. They aren't there to "get coverage". Each one exists because a specific thing would break invisibly without it:
+`tests/registers_test.cpp` calls a small `check(name, actual, expected)` function and prints `pass` or `FAIL` for each one. Each group exists because a specific thing would break invisibly without it:
 
-| Test | The bug it catches |
+| Check | The bug it catches |
 | :--- | :--- |
-| `a = 0x1234` → `0x34` | Someone removes the trimming |
-| `l = -1` → `0xff` | Trimming works on negative numbers too |
-| `bc = 0x1234` → B=0x12, C=0x34 | The split is backwards |
-| `h`, `l` set → `hl` joins correctly | `<<` got changed to `>>` |
-| `f = 0xff` → `0xf0` | The unused bits come back to life |
-| `af = 0x00ff` → F=0xf0 | The mask survives being written through a pair |
+| `set_a(0x1234)` → `0x34` | Someone removes the trimming |
+| `set_l(-1)` → `0xff` | Trimming works on negative numbers too |
+| `set_bc(0x1234)` → B=0x12, C=0x34 | The split is backwards |
+| `h`, `l` set → `hl()` joins correctly | `<<` got changed to `>>` |
+| `set_f(0xff)` → `0xf0` | The unused bits come back to life |
+| `set_af(0x00ff)` → F=0xf0 | The mask survives being written through a pair |
 | setting one flag leaves the others alone | An instruction clobbers a flag it wasn't supposed to touch |
-| `postBoot()` values | Someone "cleans up" those magic numbers |
+| `set_post_boot_values()` | Someone "cleans up" those magic numbers |
 
-That last flag test is the important one for what comes next. Once there are 500 instructions all setting flags, "did the add instruction quietly clear the carry flag?" is the question that eats a week. The test is one line of insurance.
+The flag check is the important one for what comes next. Once there are 500 instructions all setting flags, "did the add instruction quietly clear the carry flag?" is the question that eats a week.
 
 ---
 
-## Part 6 — What the commands actually do
+## Part 6 — What the command does
 
 ```bash
-npm test
+make test
 ```
 
-Runs every file in `tests/`, shows a pass/fail per test. No game runs, no browser. Just: does the register file still behave?
+Compiles the test, then runs it. The compiler runs with `-Wall -Wextra -Wpedantic -Werror`: every warning is turned on, and any warning stops the build. No game runs, no browser. Just: does the register file still behave?
 
 ```bash
-npm run typecheck
+make clean
 ```
 
-Reads every source file and reports type mistakes without producing any output. Catches "you're treating something possibly-empty as if it has a value" before it becomes a crash.
-
-```bash
-npm run build
-```
-
-Produces `dist/index.js` (plain JavaScript anyone can run) and `dist/index.d.ts` (notes telling other TypeScript projects what's available). This is the thing that would eventually be published.
+Deletes the `build/` folder.
 
 ---
 

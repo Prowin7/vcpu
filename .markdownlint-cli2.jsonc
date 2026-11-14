@@ -9,5 +9,5 @@
     "MD024": { "siblings_only": true }
   },
   // LICENSE is legal text in a fixed format, not documentation.
-  "ignores": ["node_modules/**", "dist/**", "LICENSE"]
+  "ignores": ["build/**", "LICENSE"]
 }

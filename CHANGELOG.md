@@ -13,13 +13,20 @@ once it is published.
 - Register file: ten 8-bit/16-bit registers with masking enforced in the
   accessors, AF/BC/DE/HL read as pairs, four named flag accessors, and the
   post-boot state that removes the need for a boot ROM.
-- Strict TypeScript project setup with `tsup` for the ESM build and `.d.ts`
-  emission, and `vitest` for tests.
+- C++17 project setup: a `Makefile` that builds with warnings as errors, and a
+  dependency-free test runner.
 - Documentation set: explanation pages for the project and for the code that
   exists, a reference glossary, a status page, and architecture decision
   records.
 
-### Notes
+### Changed
 
-- Not published to npm. The package is marked `"private": true` until the
-  definition-of-done checklist is satisfied.
+- Moved the project from TypeScript to C++17 ([ADR 0007](docs/decisions/0007-cpp-not-typescript.md)).
+  The register file keeps the same behavior; accessors are now `a()` /
+  `set_a(value)`, flags are `zero_flag()` / `set_zero_flag(on)`, and
+  `postBoot()` is now `set_post_boot_values()`.
+
+### Removed
+
+- The Node.js toolchain: `package.json`, the lockfile, `tsconfig.json` and
+  `src/index.ts`.

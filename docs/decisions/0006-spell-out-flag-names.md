@@ -10,16 +10,16 @@ they collide.
 
 ## Decision
 
-Name the flag accessors `zeroFlag`, `subtractFlag`, `halfCarryFlag` and
-`carryFlag`. Reserve the single letters for the registers.
+Name the flag accessors `zero_flag`, `subtract_flag`, `half_carry_flag` and
+`carry_flag`. Reserve the single letters for the registers.
 
 ## Consequences
 
 **Good:** `reg.c` is unambiguous. The code compiles, and a reader does not have
 to reconstruct which `c` was meant from context.
 
-**Bad:** flag handling reads more verbosely — `reg.carryFlag = true` instead of
-`reg.c = true` — in code that will be written hundreds of times.
+**Bad:** flag handling reads more verbosely — `registers.set_carry_flag(true)` instead of
+`set_c(true)` — in code that will be written hundreds of times.
 
 **Note:** this was not a theoretical concern. The first implementation used the
 short names and failed to compile with a duplicate member. The collision is

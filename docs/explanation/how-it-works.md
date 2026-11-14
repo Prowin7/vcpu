@@ -37,7 +37,7 @@ The console has a pair called BC, which is the two registers B and C read as one
 Flags are single bits that record what the last arithmetic did: was the result zero, was it a subtraction, did it carry, did it carry out of half a byte. Four bits, nothing else. The bottom four bits of that register are hardwired to zero on real hardware, and we enforce that on write.
 
 **Flag names are spelled out in full.**
-The console uses the single letters `H` and `C` for two registers *and* for two flags. Using the short names would collide, so the flags are `halfCarryFlag` and `carryFlag`. The short names stay reserved for the registers.
+The console uses the single letters `H` and `C` for two registers *and* for two flags. Using the short names would collide, so the flags are `half_carry_flag` and `carry_flag`. The short names stay reserved for the registers.
 
 **The startup program is skipped.**
 A real Game Boy runs a small hidden program on power-up that leaves the registers at known values. We just set those values directly. That skips needing a copy of Nintendo's startup code, which we could not legally ship.
@@ -49,12 +49,11 @@ Tests that need a game file download it into a folder that git ignores.
 
 | Choice | Reason |
 | :--- | :--- |
-| TypeScript | Fast enough — the console runs at 4 MHz, and JavaScript emulators clear that comfortably. And bugs come with real stack traces and readable names, which a compiled language would take away. |
-| TypeScript 5, not 6 | The tool that bundles the type definitions cannot read TypeScript 6 yet. Pinned until it can. |
-| `tsup` with command-line flags | Two flags do the whole job. No config file to open and decode. |
-| `strict` mode | Makes the compiler point at the places most likely to be wrong. |
-| `vitest` | Runs TypeScript tests with no setup. |
-| `"private": true` | Stops an accidental publish before the project is ready. |
+| C++17 | Fast, and integer widths are real types: a register is a `uint8_t`, a program counter is a `uint16_t`. See [decision 0007](../decisions/0007-cpp-not-typescript.md). |
+| Header-only | One `.hpp` per part, no library to link yet. Easy to read top to bottom. |
+| `make` and the system compiler | One short `Makefile`. Nothing to install. |
+| `-Wall -Wextra -Wpedantic -Werror` | Makes the compiler point at the places most likely to be wrong. |
+| A hand-rolled test runner | A few dozen checks do not need a framework. Swap in one when the test count justifies it. |
 
 ## Words you will run into
 

@@ -1,5 +1,4 @@
-node_modules/
-dist/
+build/
 
 # Test ROMs are fetched, never committed or published.
 tests/roms/

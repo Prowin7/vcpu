@@ -1,14 +1,15 @@
 # vcpu
 
-A Game Boy emulator written in TypeScript, built to be looked inside.
+A Game Boy emulator written in C++, built to be looked inside.
 
 You drop a game file (`.gb`) onto a web page, the game starts, and you can
 pause it to see the CPU's registers, walk through memory, and watch the
 graphics memory change. Most emulators show you the game. This one is built to
 show you the machine behind it.
 
-It runs in a browser tab and in a terminal, with no third-party libraries at
-runtime.
+It is plain C++17 with no third-party libraries. Running it in a browser tab
+will need a WebAssembly build, which is not set up yet
+([decision 0007](docs/decisions/0007-cpp-not-typescript.md)).
 
 ## Status
 
@@ -31,24 +32,22 @@ The full index is [docs/README.md](docs/README.md).
 
 ## Getting started
 
-Requires Node.js 20 or newer.
+Requires a C++17 compiler (`c++`, `g++` or `clang++`) and `make`.
 
 ```bash
-npm install
-npm test        # run the tests
-npm run build   # compile to JavaScript in dist/
-npm run typecheck
+make test    # build and run the tests
+make clean   # remove build/
 ```
 
 ## Project layout
 
 ```text
 src/
-├── index.ts            public exports
-├── cpu/Registers.ts    the CPU's registers and flags
+├── cpu/Registers.hpp   the CPU's registers and flags
 ├── mmu/  ppu/  io/     memory, graphics, timer and buttons (not yet written)
 └── sdk/                headless runner and canvas renderer (not yet written)
-tests/                  unit tests
+tests/                  unit tests (plain C++, no framework)
+Makefile                builds and runs the tests
 docs/                   documentation, organised by purpose
 ```
 
