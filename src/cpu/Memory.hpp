@@ -2,48 +2,55 @@
 
 #include <cstdint>
 #include <string>
-#include <vector>
 using namespace std;
 
 // The Game Boy's 64 KB of memory: one array, addresses 0x0000 to 0xFFFF.
-// The game file (ROM) is copied into the first 32 KB. Only games with no
-// bank switching (32 KB or smaller) work for now.
+// The game file (ROM) is copied into the first 32 KB. Only games of 32 KB or
+// smaller work for now.
 class Memory {
  public:
-  Memory() : bytes_(0x10000, 0) {}
+  Memory() {
+    for (int address = 0; address < 0x10000; address++) {
+      bytes_[address] = 0;
+    }
+  }
 
-  uint8_t read(int address) { return bytes_[real_address(address)]; }
+  uint8_t read(int address) {
+    address = fix_address(address);
+    return bytes_[address];
+  }
 
   void write(int address, int value) {
-    address = real_address(address);
+    address = fix_address(address);
     bytes_[address] = value & 0xff;
 
-    // Test programs print text by sending one byte at a time through the
-    // serial port: put the byte in 0xFF01, then write 0x81 to 0xFF02.
-    if (address == 0xff02 && (value & 0xff) == 0x81) {
+    // Test programs print text one byte at a time: put the byte in 0xFF01,
+    // then write 0x81 to 0xFF02.
+    if (address == 0xff02 && bytes_[address] == 0x81) {
       serial_output += static_cast<char>(bytes_[0xff01]);
     }
   }
 
   // Copy the game file into the start of memory.
-  void load_rom(const vector<uint8_t>& rom) {
-    for (size_t i = 0; i < rom.size() && i < 0x8000; i++) {
+  void load_rom(const uint8_t* rom, int size) {
+    for (int i = 0; i < size && i < 0x8000; i++) {
       bytes_[i] = rom[i];
     }
   }
 
-  // Everything the program has printed over the serial port so far.
+  // Everything the program has printed so far.
   string serial_output;
 
  private:
-  // 0xE000-0xFDFF is a mirror of 0xC000-0xDDFF: same bytes, second address.
-  int real_address(int address) {
+  // Keep the address between 0 and 65535. Also, 0xE000-0xFDFF is a mirror of
+  // 0xC000-0xDDFF (same bytes, second address), so move it down by 0x2000.
+  int fix_address(int address) {
     address = address & 0xffff;
     if (address >= 0xe000 && address <= 0xfdff) {
-      return address - 0x2000;
+      address = address - 0x2000;
     }
     return address;
   }
 
-  vector<uint8_t> bytes_;
+  uint8_t bytes_[0x10000];
 };

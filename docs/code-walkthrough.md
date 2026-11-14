@@ -301,14 +301,15 @@ One array of 65536 bytes. `read(address)` and `write(address, value)` are the on
 `Cpu` owns a `Registers` and borrows a `Memory`. Each `step()`:
 
 1. `fetch_byte()` reads the byte at PC and moves PC forward. That byte is the opcode.
-2. The opcode picks a branch: `0xCB` goes to the prefix handler, `0x40`-`0x7F` is a register copy, `0x80`-`0xBF` is math on A, and the rest go to `run_block_0` or `run_block_3`.
-3. The branch does its work and returns.
+2. If the opcode is `0x40`-`0x7F` (register copy) or `0x80`-`0xBF` (math on A), it handles those two rows first. They are 8 opcodes per row, so division picks the registers: `destination = (opcode - 0x40) / 8`, `source = opcode % 8`.
+3. Every other opcode has its own `case` in one big `switch`, for example `case 0x3e: set_register(REG_A, fetch_byte());`.
 
 Things to know when reading it:
 
-- **Register numbers.** `0=B 1=C 2=D 3=E 4=H 5=L 6=(HL) 7=A`. `(HL)` means the memory byte at the address in HL. `get_register` and `set_register` hide that difference.
-- **Pair and condition numbers.** Pairs are `0=BC 1=DE 2=HL 3=SP` (3 is AF for push and pop). Conditions are `0=NZ 1=Z 2=NC 3=C`.
-- **`alu(kind, value)`** is one function for ADD, ADC, SUB, SBC, AND, XOR, OR and CP. It works out the result and the flags, and CP skips storing the result.
+- **Register numbers.** Named constants: `REG_B`, `REG_C`, `REG_D`, `REG_E`, `REG_H`, `REG_L`, `REG_HL_MEMORY`, `REG_A`. `REG_HL_MEMORY` means the memory byte at the address in HL. `get_register` and `set_register` hide that difference.
+- **Jumps, calls and returns** are `jump_if`, `jump_relative_if`, `call_if` and `return_if`. Each takes a true/false condition, and `true` means "always".
+- **Math on A.** `do_math_on_a` picks `add`, `subtract` or `logic`. Each returns the result and sets the flags. Compare is a subtract that throws the result away.
+- **Rotates and shifts** are one small function each (`rotate_left_with_wrap`, `shift_right`, ...). The `0xCB` instructions and the plain `RLCA`-style instructions share them.
 - **Flags.** INC and DEC leave carry alone. 16-bit ADD leaves zero alone. Each rule is in the code next to the instruction.
 - **Unknown opcodes** throw an error, which `main` catches and reports with the PC.
 

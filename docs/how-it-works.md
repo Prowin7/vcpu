@@ -45,8 +45,8 @@ A real Game Boy runs a small hidden program on power-up that leaves the register
 **The CPU runs one instruction per `step()`, and nothing else.**
 `step()` reads the byte at PC, does what it says, and returns. There are no cycle counts, interrupts or timer yet. That keeps the instruction code easy to read and test, and it is why only simple ROMs run so far.
 
-**Instructions are decoded from the opcode's bits, not listed one by one.**
-For example, `0x40`-`0x7F` is "copy one register to another": the low 3 bits pick the source and the next 3 pick the destination. This shrinks hundreds of cases into a few patterns. The cost: you must know the bit layout to follow the code, and the comments in `Cpu.hpp` explain it.
+**Each instruction has its own named case in one `switch`.**
+`case 0x3e: set_register(REG_A, fetch_byte());` says exactly what it does. The cost is a long file; the gain is that you can read any line without knowing a bit trick. Only the two big rows of look-alike opcodes (`0x40`-`0xBF`) use simple division to pick the registers.
 
 **All memory goes through `read` and `write`.**
 Echo-region mirroring and serial capture happen in `write`, in one place. The inspector will later watch addresses from the same place.
