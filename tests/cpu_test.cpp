@@ -39,7 +39,7 @@ int main() {
 
     memory.write(0xff01, 'H');
     memory.write(0xff02, 0x81);
-    check("serial captures a byte", memory.serial_output == "H", 1);
+    check("serial captures a byte", memory.serial_output[0], 'H');
   }
 
   // ---- Loads ----

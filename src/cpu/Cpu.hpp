@@ -24,9 +24,23 @@ const int REG_L = 5;
 const int REG_HL_MEMORY = 6;
 const int REG_A = 7;
 
+// Math operations. The order matches the order of the 0x80-0xBF opcodes.
+const int MATH_ADD = 0;
+const int MATH_ADD_WITH_CARRY = 1;
+const int MATH_SUBTRACT = 2;
+const int MATH_SUBTRACT_WITH_CARRY = 3;
+const int MATH_AND = 4;
+const int MATH_XOR = 5;
+const int MATH_OR = 6;
+const int MATH_COMPARE = 7;
+
 class Cpu {
  public:
-  Cpu(Memory& memory) : memory_(memory) { registers.set_post_boot_values(); }
+  // The CPU does not own the memory, it uses the one it is given.
+  // ": memory_(memory)" stores that memory in memory_ below.
+  Cpu(Memory& memory) : memory_(memory) {
+    registers.set_post_boot_values();
+  }
 
   Registers registers;
 
@@ -254,7 +268,13 @@ class Cpu {
   }
 
   // A signed byte: 0x00-0x7F is 0 to 127, 0x80-0xFF is -128 to -1.
-  int fetch_signed_byte() { return static_cast<int8_t>(fetch_byte()); }
+  int fetch_signed_byte() {
+    int value = fetch_byte();
+    if (value > 127) {
+      value = value - 256;
+    }
+    return value;
+  }
 
   // ---- registers by number ----
   int get_register(int number) {
@@ -336,16 +356,6 @@ class Cpu {
   }
 
   // ---- math on A ----
-  // The order of these numbers matches the order of the 0x80-0xBF opcodes.
-  static const int MATH_ADD = 0;
-  static const int MATH_ADD_WITH_CARRY = 1;
-  static const int MATH_SUBTRACT = 2;
-  static const int MATH_SUBTRACT_WITH_CARRY = 3;
-  static const int MATH_AND = 4;
-  static const int MATH_XOR = 5;
-  static const int MATH_OR = 6;
-  static const int MATH_COMPARE = 7;
-
   void do_math_on_a(int operation, int value) {
     int a = registers.a();
     int carry = registers.carry_flag() ? 1 : 0;

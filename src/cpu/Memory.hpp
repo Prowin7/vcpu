@@ -5,8 +5,8 @@
 using namespace std;
 
 // The Game Boy's 64 KB of memory: one array, addresses 0x0000 to 0xFFFF.
-// The game file (ROM) is copied into the first 32 KB. Only games of 32 KB or
-// smaller work for now.
+// The game file (ROM) is written into the first 32 KB, one byte at a time.
+// Only games of 32 KB or smaller work for now.
 class Memory {
  public:
   Memory() {
@@ -27,14 +27,8 @@ class Memory {
     // Test programs print text one byte at a time: put the byte in 0xFF01,
     // then write 0x81 to 0xFF02.
     if (address == 0xff02 && bytes_[address] == 0x81) {
-      serial_output += static_cast<char>(bytes_[0xff01]);
-    }
-  }
-
-  // Copy the game file into the start of memory.
-  void load_rom(const uint8_t* rom, int size) {
-    for (int i = 0; i < size && i < 0x8000; i++) {
-      bytes_[i] = rom[i];
+      char letter = bytes_[0xff01];
+      serial_output += letter;
     }
   }
 

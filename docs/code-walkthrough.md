@@ -294,7 +294,6 @@ One array of 65536 bytes. `read(address)` and `write(address, value)` are the on
 
 - **The mirror.** `0xE000`-`0xFDFF` is the same memory as `0xC000`-`0xDDFF`. `real_address` subtracts `0x2000` so both addresses reach the same byte.
 - **Serial output.** Test ROMs print text one byte at a time: put the byte in `0xFF01`, write `0x81` to `0xFF02`. `write` spots that and appends the character to `serial_output`.
-- **`load_rom`** copies the game into the first 32 KB.
 
 ### `Cpu.hpp`
 
@@ -315,7 +314,7 @@ Things to know when reading it:
 
 ### `main.cpp`
 
-Reads the file into bytes, loads it into memory, creates the CPU, and calls `step()` in a loop. Then it prints the serial text and registers.
+Opens `game.gb`, writes its bytes into memory one at a time (32 KB at most), creates the CPU, and calls `step()` in a loop. Then it prints the serial text and registers.
 
 ### `tests/cpu_test.cpp`
 

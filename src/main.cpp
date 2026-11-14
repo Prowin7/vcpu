@@ -8,18 +8,21 @@ const char* ROM_PATH = "game.gb";
 const int MAX_INSTRUCTIONS = 10000000;
 
 int main() {
-  // Read the game file into one array (32 KB is the most we use).
-  static uint8_t rom[0x8000];
   ifstream file(ROM_PATH, ios::binary);
   if (!file) {
     cout << "cannot open " << ROM_PATH << endl;
     return 1;
   }
-  file.read(reinterpret_cast<char*>(rom), sizeof(rom));
-  int rom_size = file.gcount();
 
+  // Put the game file into memory, one byte at a time (32 KB at most).
   Memory memory;
-  memory.load_rom(rom, rom_size);
+  char byte;
+  int address = 0;
+  while (address < 0x8000 && file.get(byte)) {
+    memory.write(address, byte);
+    address++;
+  }
+
   Cpu cpu(memory);
 
   try {
@@ -31,9 +34,12 @@ int main() {
   }
 
   cout << memory.serial_output << endl;
-  cout << hex << "A=" << +cpu.registers.a() << " F=" << +cpu.registers.f()
-       << " BC=" << cpu.registers.bc() << " DE=" << cpu.registers.de()
-       << " HL=" << cpu.registers.hl() << " SP=" << cpu.registers.sp()
-       << " PC=" << cpu.registers.pc() << endl;
+
+  // Copy into plain ints so cout prints numbers, not characters.
+  int a = cpu.registers.a();
+  int f = cpu.registers.f();
+  cout << hex << "A=" << a << " F=" << f << " BC=" << cpu.registers.bc()
+       << " DE=" << cpu.registers.de() << " HL=" << cpu.registers.hl()
+       << " SP=" << cpu.registers.sp() << " PC=" << cpu.registers.pc() << endl;
   return 0;
 }
