@@ -38,7 +38,7 @@ Almost all the confusion in this file comes from four operators. Each one works 
 
 `value & 0xff` throws away everything except the bottom 8 bits.
 
-```
+```text
   0x1234 in binary: 0001 0010 0011 0100
   0xff   in binary: 0000 0000 1111 1111
   AND result:       0000 0000 0011 0100  = 52 = 0x34
@@ -48,7 +48,7 @@ Almost all the confusion in this file comes from four operators. Each one works 
 
 Used to glue two halves back into one number.
 
-```
+```text
   0x12 << 8  = 0001 0010 0000 0000
   0x34       = 0000 0000 0011 0100
   OR result  = 0001 0010 0011 0100  = 0x1234
@@ -68,7 +68,7 @@ Used to glue two halves back into one number.
 
 ## Part 3 — Every file we have, and why it exists
 
-```
+```text
 package.json        Tells npm the project's name, that it uses modern modules,
                     and what `npm test` / `npm run build` should run.
 tsconfig.json       Rules for the compiler. Mostly: be strict, and yell at me
@@ -104,7 +104,7 @@ export const FLAG_C = 0x10;
 
 The F register doesn't store a number. It stores four on/off switches, one per bit, in the *top* four bits of a byte:
 
-```
+```text
   bit:   7  6  5  4  3  2  1  0
         [Z][N][H][C][0][0][0][0]
   0x80 = 1000 0000  → the Z switch
@@ -204,7 +204,7 @@ Read it as: **to get BC, push B up 8 places and drop C underneath.** To set BC, 
 
 Worked example — `reg.bc = 0x1234`:
 
-```
+```text
   value = 0x1234
   value >> 8  = 0x12  →  stored in B
   value       = 0x34  →  stored in C  (truncated to 8 bits by the setter)
@@ -212,7 +212,7 @@ Worked example — `reg.bc = 0x1234`:
 
 and reading it back:
 
-```
+```text
   (0x12 << 8) | 0x34  =  0x1200 | 0x34  =  0x1234
 ```
 
@@ -280,16 +280,19 @@ That last flag test is the important one for what comes next. Once there are 500
 ```bash
 npm test
 ```
+
 Runs every file in `tests/`, shows a pass/fail per test. No game runs, no browser. Just: does the register file still behave?
 
 ```bash
 npm run typecheck
 ```
+
 Reads every source file and reports type mistakes without producing any output. Catches "you're treating something possibly-empty as if it has a value" before it becomes a crash.
 
 ```bash
 npm run build
 ```
+
 Produces `dist/index.js` (plain JavaScript anyone can run) and `dist/index.d.ts` (notes telling other TypeScript projects what's available). This is the thing that would eventually be published.
 
 ---

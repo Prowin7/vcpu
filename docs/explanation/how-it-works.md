@@ -56,30 +56,12 @@ Tests that need a game file download it into a folder that git ignores.
 | `vitest` | Runs TypeScript tests with no setup. |
 | `"private": true` | Stops an accidental publish before the project is ready. |
 
-## Words you'll run into
+## Words you will run into
 
-Plain meanings, so no page of this project is unreadable.
-
-| Word | Meaning |
-| :--- | :--- |
-| **Emulator** | Software that pretends to be a machine. |
-| **ROM / game file** | The game itself, a single `.gb` file. "ROM" means read-only memory — the chip games came on. |
-| **Register** | A tiny slot inside the CPU holding one number, 0–255. |
-| **Address** | A number that names one byte of memory, like a house number. |
-| **Byte** | One number, 0–255. |
-| **16-bit / word** | Two bytes read as one number, 0–65535. |
-| **Flag** | A single bit recording what the last calculation did. |
-| **Hex (`0xFF00`)** | Just how we write memory addresses. `0xFF00` is 65280. |
-| **Instruction** | One thing the CPU can do, like "add these two numbers". |
-| **Tile** | A small 8×8 picture. The screen is built from a grid of them. |
-| **Sprite** | A small picture that can move anywhere on screen — a character, a bullet. |
-| **Frame** | One complete picture. The screen redraws about 60 times a second. |
-| **V-Blank** | The short gap after each frame, when the screen is idle and safe to redraw. |
-| **Interrupt** | The hardware tapping the CPU on the shoulder: "deal with me now". |
-| **Snapshot / save state** | A copy of the entire machine at one instant, so you can come back to it. |
+Every term this project uses, in plain words, is in the glossary: [../reference/glossary.md](../reference/glossary.md).
 
 ## Where the deeper notes are
 
-[what-is-possible.md](../what-is-possible.md) covers what the surrounding landscape looks like and why the scope was cut where it was. The milestone plan is in [virtual_8_bit_cpu_browser_hardware_architecture_plan.md](../virtual_8_bit_cpu_browser_hardware_architecture_plan.md).
+[what-is-possible.md](../../what-is-possible.md) covers what the surrounding landscape looks like and why the scope was cut where it was. The milestone plan is in [virtual_8_bit_cpu_browser_hardware_architecture_plan.md](../../virtual_8_bit_cpu_browser_hardware_architecture_plan.md).
 
 Those two are research notes, written before any code existed, so they use the jargon freely. This page is the plain-language version.

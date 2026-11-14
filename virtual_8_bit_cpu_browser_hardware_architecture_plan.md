@@ -12,7 +12,7 @@
 
 The roots are unchanged: *"a user drops a legitimate `.gb` ROM onto a web page and the game boots and runs at ~60 FPS in the browser."* That hook is the product's whole demo, and everything in this plan serves it.
 
-```
+```text
 vcpu/
 ├── VirtualMachine        loadRom / stepFrame / stepInstruction / setButton
 │                         saveState / loadState / getSnapshot / watch(addr, cb)
@@ -104,7 +104,7 @@ Publish at `0.1.0`. It is a preview, not a 1.0 — say so in the README.
 | 5 | **H** Half-carry | `0x20` | Carry out of bit 3 (or borrow from bit 4). Exists for BCD (`DAA`). |
 | 4 | **C** Carry | `0x10` | Carry out of bit 7, borrow below 0, or bit shifted out. |
 
-```
+```text
 H_add(a,b) = ((a & 0x0F) + (b & 0x0F)) > 0x0F
 H_sub(a,b) = (a & 0x0F) < (b & 0x0F)
 ```
@@ -181,6 +181,7 @@ Each has an exit gate with a command. **Do not start a milestone before the prev
 ### **M0 — Scaffold + headless harness** · 4–6 h
 
 **Build:**
+
 - `package.json` (ESM, `type: module`, `exports`, `files: ["dist"]`, Node 20+), `tsconfig.json` (strict, `noUncheckedIndexedAccess`), `tsup.config.ts`, `vitest.config.ts`
 - `src/types/hardware.ts` — snapshot and watcher interfaces
 - `src/cpu/Registers.ts` — masked `number` fields (`a…l`, `pc`, `sp`), `f` with `& 0xF0`, packed accessors `af/bc/de/hl`, flag helpers, post-boot defaults
@@ -189,6 +190,7 @@ Each has an exit gate with a command. **Do not start a milestone before the prev
 - `tests/registers.test.ts`, `tests/mmu.test.ts`
 
 **Gate:**
+
 - `npm test` green: writing `0x1234` to `BC` yields `B=0x12, C=0x34`; `write16(0xC000, 0xABCD)` writes `0xCD` then `0xAB`; setting `AF` masks `F` to `0xF0`; echo-RAM write to `0xE000` visible at `0xC000`.
 - `npm run build` produces `dist/index.js` + `dist/index.d.ts`.
 - `tsc --noEmit` clean.
@@ -200,6 +202,7 @@ Each has an exit gate with a command. **Do not start a milestone before the prev
 ### **M1 — CPU core** · 20–30 h
 
 **Build:**
+
 - `src/cpu/ALU.ts` — `add8/sub8/adc8/sbc8/and/or/xor/cp/inc/dec`, all 8 shift/rotate, `add16`, `addSpSigned8`, exact flag semantics
 - `src/cpu/CPU.ts` — fetch-decode-execute, stack `push16/pop16`, control flow (`JR/JP/CALL/RET` + conditions), `HALT`, `EI/DI`, interrupt dispatch, **returns exact T-state count per instruction**
 - `src/cpu/Opcodes.ts` — dispatch via the octal encoding, not 512 hand-written cases:
@@ -211,6 +214,7 @@ Each has an exit gate with a command. **Do not start a milestone before the prev
 - `tests/roms/` — blargg ROMs fetched by a script, **gitignored**, never published
 
 **Gate:**
+
 - blargg `cpu_instrs` **11/11 individual sub-tests + combined ROM** pass in the headless harness
 - `instr_timing` passes (this forces exact cycle counts)
 - Hand-written assembled program: sums 1..10 in a loop, calls a subroutine, pushes/pops, halts — asserted from registers
@@ -220,6 +224,7 @@ Each has an exit gate with a command. **Do not start a milestone before the prev
 ### **M2 — PPU (T3)** · 15–25 h
 
 **Build:**
+
 - `src/ppu/PPU.ts` — `framebuffer: Uint8ClampedArray(160*144*4)`, `step(cycles)` advancing `LY`/`STAT`, `renderFrame()` at V-Blank
 - `src/ppu/TileDecoder.ts` — 2BPP row decode, 8×16 sprite mode skipped (not needed for the ladder)
 - BG, window, OAM sprite compositing with priority + flips; `BGP/OBP0/OBP1`; `LCDC` bit handling
@@ -227,6 +232,7 @@ Each has an exit gate with a command. **Do not start a milestone before the prev
 - `src/sdk/CanvasRenderer.ts` + `requestAnimationFrame` loop with **time-accumulator frame pacing and catch-up clamp**
 
 **Gate:**
+
 - **`dmg-acid2` renders with 0/23040 mismatched pixels** against the reference PNG (quantise to shade ranks before diffing)
 - Our own assembled program: tile data → tilemap → a sprite that moves with the D-pad, on a canvas
 - Frame time < 16 ms in Chrome on your machine (measure, don't assume)
@@ -236,12 +242,14 @@ Each has an exit gate with a command. **Do not start a milestone before the prev
 ### **M3 — Peripherals + first real game** · 8–12 h
 
 **Build:**
+
 - `src/io/Timer.ts` — `DIV` (every 256 T-states, write resets), `TIMA/TMA/TAC` with the four selectable frequencies, overflow → modulo + Timer interrupt
 - `src/io/Joypad.ts` — 2×4 active-low matrix at `0xFF00` (bit 4 selects d-pad, bit 5 selects buttons)
 - `src/mmu/Cartridge.ts` — ROM-only + MBC1 (all four banking modes)
 - `setButton()` API and keyboard binding
 
 **Gate:**
+
 - `instr_timing` and `mem_timing` (8/8) still pass *with the timer wired in* — this is the real test that the timer is right
 - **Tetris boots to its title screen and plays** with keyboard input, ~59.7 FPS
 - (stretch) Super Mario Land boots with MBC1
@@ -253,12 +261,14 @@ Each has an exit gate with a command. **Do not start a milestone before the prev
 > This milestone is the differentiator. It is what no existing package does well.
 
 **Build:**
+
 - `saveState(): Uint8Array` / `loadState()` — CPU + 64 KB + PPU + timer + MBC state
 - `stepInstruction()`, `getSnapshot()`, `watch(addr, cb)`
 - `attachCanvas()`, `setButton()`, pause/resume, speed control
 - Inspector UI (separate `demo/` app, not in the package bundle): registers+flags, disassembly of next 10 instructions, VRAM tile viewer, tilemap viewer, OAM table, memory hex + watch list
 
 **Gate:**
+
 - `saveState` → mutate → `loadState` returns byte-identical state (test)
 - `stepInstruction` on Tetris advances the disassembly correctly and the frame stays consistent
 - Inspector shows live values while Tetris runs (visual check, recorded as a GIF for the README)
@@ -268,11 +278,13 @@ Each has an exit gate with a command. **Do not start a milestone before the prev
 ### **M5 — Assembler + demo game** · 15–25 h
 
 **Build:**
+
 - Full assembler: all opcodes, labels (forward + backward), `.org`, `.db/.dw`, tile-data macro, `compile(): Uint8Array` with a valid cartridge header + checksum
 - `demo/game.ts` — one screen: tiled background, one sprite, D-pad movement, BCD score, V-Blank-synced loop. ~200 lines of assembly-through-TS.
 - `npm run game` builds the ROM and loads it in the demo page
 
 **Gate:**
+
 - `compile()` output boots on **our** VM *and* on a known-good external emulator (binjgb or SameBoy) — cross-validation proves the assembler, not just the VM
 - The game is playable and holds ~59.7 FPS
 - `npm run game` is one command from clone to playing
@@ -377,7 +389,7 @@ If a task is not in the **In** list and not in a milestone gate: it does not exi
 
 **M0**, in this order:
 
-```
+```text
 1. npm init + TS strict + tsup + vitest + tsconfig/exports
 2. src/cpu/Registers.ts      → tests/registers.test.ts
 3. src/mmu/MemoryBus.ts      → tests/mmu.test.ts

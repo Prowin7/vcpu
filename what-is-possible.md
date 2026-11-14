@@ -33,7 +33,7 @@ Two conclusions, both important:
 
 Your plan currently claims the first while specifying the second. You must pick one, because they have different economics.
 
-|  | **A. Custom ISA** ("I designed a CPU") | **B. LR35902-compatible** ("I implemented a real CPU") |
+| | **A. Custom ISA** ("I designed a CPU") | **B. LR35902-compatible** ("I implemented a real CPU") |
 | :--- | :--- | :--- |
 | Novelty | High — almost nobody ships a JS-hosted *original* ISA as a library | Low — see the table above |
 | Correctness oracle | **None.** You are the specification. Your unit tests are the only truth. | **Free and brutal** — blargg, Mooneye, dmg-acid2 |
